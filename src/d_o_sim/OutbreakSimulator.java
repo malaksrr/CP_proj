@@ -1,10 +1,8 @@
 package d_o_sim;
-
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class OutbreakSimulator {
     public static void main(String[] args) {
@@ -15,7 +13,7 @@ public class OutbreakSimulator {
         int[] threadCounts = {1, 2, 4, 8, 16};
         long baseSeed = 42L;
         List<String> csvLines = new ArrayList<>();
-        csvLines.add("Threads,Simulations,Time(ms),Speedup,AvgDeceased,AvgPeakBeds,CapacityExceededCount");
+        csvLines.add("Threads,Time(ms),Speedup,AvgDeceased,AvgPeakBeds");
 
         // Run sequential baseline
         long seqTime = 0;
@@ -38,12 +36,9 @@ public class OutbreakSimulator {
                 .mapToInt(OutbreakResult::peakHospitalBedUsage)
                 .average()
                 .orElse(0);
-            long capacityExceededCount = seqResults.stream()
-                .filter(OutbreakResult::capacityExceeded)
-                .count();
 
-            String seqLine = String.format("1 (Sequential),%d,%d,%.2f,%d,%d,%d",
-                totalSimulations, seqTime, 1.00, avgDeceased, avgPeakBeds, capacityExceededCount);
+            String seqLine = String.format("(Sequential),%d,%.2f,%d,%d",
+                seqTime, 1.00, avgDeceased, avgPeakBeds);
 
             csvLines.add(seqLine);
 
@@ -68,11 +63,11 @@ public class OutbreakSimulator {
 
                 int avgDeceased = (int)(totalDeceased.sum() / totalSimulations);
                 int avgPeakBeds = (int)(totalPeakBeds.sum() / totalSimulations);
-                long exceededCount = capacityExceededCount.sum();
+                
 
-                String line = String.format("%d,%d,%d,%.2f,%d,%d,%d",
-                    threads, totalSimulations, parTime, speedup,
-                    avgDeceased, avgPeakBeds, exceededCount);
+                String line = String.format("%d,%d,%.2f,%d,%d",
+                    threads, parTime, speedup,
+                    avgDeceased, avgPeakBeds);
 
                 csvLines.add(line);
 
